@@ -1,0 +1,64 @@
+{
+    "title": {
+        "p": {
+            "width": "848",
+            "height": "56",
+            "offsetX": "72",
+            "offsetY": "40",
+            "lineSpacing": 0
+        },
+        "text": {
+            "name": "",
+            "size": "24",
+            "color": "#0793CD"
+        }
+    },
+    "subTitle": {
+        "p": {
+            "width": "370",
+            "height": "38",
+            "offsetX": "72",
+            "offsetY": "133",
+            "lineSpacing": 120
+        },
+        "text": {
+            "name": "",
+            "size": "14",
+            "color": "#000000"
+        }
+    },
+    "body": {
+        "p": {
+            "width": "468",
+            "height": "83",
+            "offsetX": "72",
+            "offsetY": "209",
+            "lineSpacing": 120
+        },
+        "text": {
+            "name": "",
+            "size": "12",
+            "color": "#000000"
+        }
+    },
+    "desc": {
+        "p": {
+            "width": "453",
+            "height": "280",
+            "offsetX": "72",
+            "offsetY": "360",
+            "lineSpacing": 120
+        },
+        "text": {
+            "name": "",
+            "size": "12",
+            "color": "#000000"
+        }
+    },
+    "img": {
+        "width": "300",
+        "height": "300",
+        "offsetX": "560",
+        "offsetY": "80"
+    }
+}
