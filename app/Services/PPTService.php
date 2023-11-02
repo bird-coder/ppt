@@ -7,9 +7,12 @@ use PhpOffice\PhpPresentation\IOFactory;
 use PhpOffice\PhpPresentation\PhpPresentation;
 use PhpOffice\PhpPresentation\Reader\PowerPoint2007;
 use PhpOffice\PhpPresentation\Shape\Table;
+use PhpOffice\PhpPresentation\Shape\Table\Cell;
 use PhpOffice\PhpPresentation\Slide;
 use PhpOffice\PhpPresentation\Style\Alignment;
 use PhpOffice\PhpPresentation\Style\Color;
+use PhpOffice\PhpPresentation\Style\Fill;
+use PhpOffice\PhpPresentation\Style\Font;
 
 class PPTService
 {
@@ -29,6 +32,16 @@ class PPTService
 
     private $configPath;
 
+    /**
+     * @var array
+     */
+    private $dataDirs;
+
+    /**
+     * @var int
+     */
+    private $tableRows = 10;
+
     public function __construct($filepath) {
         $this->filepath = $filepath;
         $this->ppt = new PhpPresentation();
@@ -44,6 +57,7 @@ class PPTService
         if ($reader->canRead($this->filepath)) {
             $this->tpl = $reader->load($this->filepath);
         }
+        $this->dataDirs = $this->loadDataFile(storage_path('ppt'));
     }
 
     public function copy($indexes = []) {
@@ -93,16 +107,124 @@ class PPTService
     //     }
     // }
 
+    public function addTable() {
+        $slide = $this->ppt->createSlide();
+        $table = new Table();
+        $table->setNumColumns(6)
+            ->setResizeProportional(false)
+            ->setWidth(910)
+            ->setHeight(460)
+            ->setOffsetX(35)
+            ->setOffsetY(150);
+
+        $this->initTableHeader($table);
+        $dirs = $this->dataDirs;
+        $size = $this->tableRows;
+        for ($i=0; $i < $size; $i++) {
+            $files = ['left' => '', 'right' => ''];
+            if (!empty($dirs[$i])) {
+                $files['left'] = $dirs[$i]['json'];
+            }
+            if (!empty($dirs[$i+$size])) {
+                $files['right'] = $dirs[$i+$size]['json'];
+            }
+            $this->addTableRow($table, $files, $i);
+        }
+
+        
+
+        $slide->addShape($table);
+        $this->save();
+    }
+
+    private function initTableHeader(Table $table) {
+        $font = (new Font())->setName('Gill Sans MT')->setBold(true)->setSize(11);
+
+        $row = $table->createRow();
+        $row->getFill()->setFillType(Fill::FILL_SOLID)
+            ->setStartColor(new Color('FF8EB4E3'))
+            ->setEndColor(new Color('FF8EB4E3'));
+
+        for ($i=0; $i < 2; $i++) { 
+            $cell = $row->nextCell()->setWidth(50);
+            $this->initCell($cell);
+            $cell->createTextRun('No')->setFont($font);
+            $cell = $row->nextCell()->setWidth(120);
+            $this->initCell($cell);
+            $cell->createTextRun('Patent No')->setFont($font);
+            $cell = $row->nextCell()->setWidth(285);
+            $this->initCell($cell);
+            $cell->createTextRun('Patent Title')->setFont($font);
+        }
+    }
+
+    private function addTableRow(Table $table, $files, $idx) {
+        $font = (new Font())->setSize(10);
+        $fontNo = (new Font())->setName('Gill Sans MT')->setSize(11);
+        
+        $row = $table->createRow();
+        $row->getFill()->setFillType(Fill::FILL_SOLID)
+            ->setStartColor(new Color('FFE9EDF4'))
+            ->setEndColor(new Color('FFE9EDF4'));
+
+        $cells = $row->getCells();
+        foreach ($cells as $cell) {
+            $this->initCell($cell);
+        }
+        
+        if (!empty($files['left'])) {
+            $dataLeft = json_decode(file_get_contents($files['left']), true);
+
+            $cell = $row->nextCell();
+            $cell->createTextRun($idx+1)->setFont($fontNo);
+            $cell = $row->nextCell();
+            $cell->createTextRun($dataLeft['number'])->setFont($font);
+            $cell = $row->nextCell();
+            $cell->createTextRun($dataLeft['title'])->setFont($font);
+
+            if (!empty($files['right'])) {
+                $dataRight = json_decode(file_get_contents($files['right']), true);
+    
+                $cell = $row->nextCell();
+                $cell->createTextRun($idx+1+$this->tableRows)->setFont($fontNo);
+                $cell = $row->nextCell();
+                $cell->createTextRun($dataRight['number'])->setFont($font);
+                $cell = $row->nextCell();
+                $cell->createTextRun($dataRight['title'])->setFont($font);
+            }
+        }
+    }
+
+    private function initCell(Cell $cell) {
+        $fill = $cell->getFill();
+        if ($fill->getFillType() === Fill::FILL_NONE) {
+            $fill->setFillType(Fill::FILL_SOLID)
+                ->setStartColor(new Color('FFE9EDF4'))
+                ->setEndColor(new Color('FFE9EDF4'));
+        }
+        
+        $borders = $cell->getBorders();
+        $borders->getTop()->setColor(new Color('FFFFFFFF'));
+        $borders->getBottom()->setColor(new Color('FFFFFFFF'));
+        $borders->getLeft()->setColor(new Color('FFFFFFFF'));
+        $borders->getRight()->setColor(new Color('FFFFFFFF'));
+
+        $cell->getActiveParagraph()->getAlignment()
+            ->setMarginLeft(2)
+            ->setMarginRight(2)
+            ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+            ->setVertical(Alignment::VERTICAL_CENTER)
+            ->setTextDirection(Alignment::TEXT_DIRECTION_HORIZONTAL);
+    }
+
     public function addContent() {
-        $path = storage_path('ppt');
-        $dirs = $this->loadDataFile($path);
+        $dirs = $this->dataDirs;
         foreach ($dirs as $dir) {
             if (strpos($dir['json'], 'CN201810934292.4') === false) {
                 continue;
             }
             $this->addSlide($dir);
         }
-        $this->save();
     }
 
     private function addSlide($dir) {
@@ -215,7 +337,7 @@ class PPTService
         }
     }
 
-    private function save() {
+    public function save() {
         if ($this->ppt) {
             $writer = IOFactory::createWriter($this->ppt, 'PowerPoint2007');
             $writer->save($this->savePath.'/output.ppt');
