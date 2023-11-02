@@ -6,9 +6,6 @@ use PhpOffice\PhpPresentation\DocumentLayout;
 use PhpOffice\PhpPresentation\IOFactory;
 use PhpOffice\PhpPresentation\PhpPresentation;
 use PhpOffice\PhpPresentation\Reader\PowerPoint2007;
-use PhpOffice\PhpPresentation\Shape\Drawing\Base64;
-use PhpOffice\PhpPresentation\Shape\Drawing\Gd;
-use PhpOffice\PhpPresentation\Shape\RichText;
 use PhpOffice\PhpPresentation\Shape\Table;
 use PhpOffice\PhpPresentation\Slide;
 use PhpOffice\PhpPresentation\Style\Alignment;
@@ -100,18 +97,18 @@ class PPTService
         $path = storage_path('ppt');
         $dirs = $this->loadDataFile($path);
         foreach ($dirs as $dir) {
-            if (strpos($dir['json'], 'CN202320256004.0') === false) {
+            if (strpos($dir['json'], 'CN201810934292.4') === false) {
                 continue;
             }
-            $data = json_decode(file_get_contents($dir['json']), true);
-            $this->addSlide($data);
+            $this->addSlide($dir);
         }
         $this->save();
     }
 
-    private function addSlide($data) {
+    private function addSlide($dir) {
         $slide = $this->ppt->createSlide();
 
+        $data = json_decode(file_get_contents($dir['json']), true);
         $configs = json_decode(file_get_contents($this->configPath), true);
         foreach ($configs as $key=>$config) {
             if ($key == 'title') {
@@ -125,19 +122,32 @@ class PPTService
             } elseif ($key == 'body') {
                 $shape = $this->initRichText($slide, $config);
                 $paragraph = $shape->getActiveParagraph();
-                $paragraph->createTextRun('Applicants: ' . $data['applicants']);
-                $paragraph->createTextRun('Inventors: ' . $data['inventors']);
+                $paragraph->createTextRun('Applicants: ');
+                $paragraph->createTextRun($data['applicants'])
+                    ->getFont()->setName($config['text']['name']);
+                $paragraph->createBreak();
+                $paragraph->createTextRun('Inventors: ');
+                $paragraph->createTextRun($data['inventors'])
+                    ->getFont()->setName($config['text']['name']);
+                $paragraph->createBreak();
                 $paragraph->createTextRun('Application Time: ' . $data['application_time']);
+                $paragraph->createBreak();
                 $paragraph->createTextRun('Legal status: ' . $data['legal_status']);
+                $paragraph->createBreak();
                 $paragraph->createTextRun('Patent type: ' . $data['patent_type']);
-                $paragraph->createTextRun('The current obligee: ' . $data['obligee']);
+                $paragraph->createBreak();
+                $paragraph->createTextRun('The current obligee: ');
+                $paragraph->createTextRun($data['obligee'])
+                    ->getFont()->setName($config['text']['name']);
             } elseif ($key == 'desc') {
                 $shape = $this->initRichText($slide, $config);
                 $paragraph = $shape->getActiveParagraph();
                 $paragraph->createTextRun('Abstract:');
-                $paragraph->createTextRun($data['abstract']);
+                $paragraph->createBreak();
+                $paragraph->createTextRun($data['abstract'])
+                    ->getFont()->setName($config['text']['name']);
             } elseif ($key == 'img') {
-                
+                $this->addImage($slide, $config, $dir['image']);
             }
         }
 
@@ -181,28 +191,28 @@ class PPTService
             ->setVertical(Alignment::VERTICAL_TOP)
             ->setTextDirection(Alignment::TEXT_DIRECTION_HORIZONTAL);
 
-        $paragraph->setLineSpacing($config['p']['lineSpacing']);
+        if ($config['p']['lineSpacing'] > 0) $paragraph->setLineSpacing($config['p']['lineSpacing']);
 
         $paragraph->getFont()
-            ->setName($config['text']['name'])
+            ->setName($config['text']['name_en'])
             ->setSize($config['text']['size'])
-            ->setColor(new Color($config['text']['color']));
-
-        $paragraph->createTextRun('test');
+            ->setColor(new Color($config['text']['color']))
+            ->setBold($config['text']['bold']);
 
         return $shape;
     }
 
-    private function addImage(Slide $slide, $url, $width, $height, $offsetX = 0, $offsetY = 0) {
-        $shape = new Base64();
-        $shape->setResizeProportional(false);
-        $shape->setData('data:image/jpeg;base64,' . base64_encode(file_get_contents($url)))
-            ->setWidth($width)
-            ->setHeight($height)
-            ->setOffsetX($offsetX)
-            ->setOffsetY($offsetY);
+    private function addImage(Slide $slide, $config, $imgpath) {
+        $shape = $slide->createDrawingShape();
+        $shape->setPath($imgpath)
+            ->setResizeProportional(true)
+            ->setWidth($config['width'])
+            ->setOffsetX($config['offsetX'])
+            ->setOffsetY($config['offsetY']);
 
-        $slide->addShape($shape);
+        if ($shape->getHeight() > $config['height']) {
+            $shape->setHeight($config['height']);
+        }
     }
 
     private function save() {

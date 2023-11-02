@@ -9,8 +9,10 @@
         },
         "text": {
             "name": "",
+            "name_en": "Times New Roman",
             "size": "24",
-            "color": "#0793CD"
+            "color": "FF0793CD",
+            "bold": false
         }
     },
     "subTitle": {
@@ -22,9 +24,11 @@
             "lineSpacing": 120
         },
         "text": {
-            "name": "",
+            "name": "宋体",
+            "name_en": "Times New Roman",
             "size": "14",
-            "color": "#000000"
+            "color": "FF000000",
+            "bold": true
         }
     },
     "body": {
@@ -36,9 +40,11 @@
             "lineSpacing": 120
         },
         "text": {
-            "name": "",
-            "size": "12",
-            "color": "#000000"
+            "name": "宋体",
+            "name_en": "Times New Roman",
+            "size": "11",
+            "color": "FF000000",
+            "bold": false
         }
     },
     "desc": {
@@ -50,15 +56,17 @@
             "lineSpacing": 120
         },
         "text": {
-            "name": "",
-            "size": "12",
-            "color": "#000000"
+            "name": "宋体",
+            "name_en": "Times New Roman",
+            "size": "11",
+            "color": "FF000000",
+            "bold": false
         }
     },
     "img": {
-        "width": "300",
-        "height": "300",
-        "offsetX": "560",
-        "offsetY": "80"
+        "width": "360",
+        "height": "500",
+        "offsetX": "550",
+        "offsetY": "110"
     }
 }
