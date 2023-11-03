@@ -9,6 +9,7 @@ use PhpOffice\PhpPresentation\Reader\PowerPoint2007;
 use PhpOffice\PhpPresentation\Shape\Table;
 use PhpOffice\PhpPresentation\Shape\Table\Cell;
 use PhpOffice\PhpPresentation\Slide;
+use PhpOffice\PhpPresentation\Slide\Background\Image;
 use PhpOffice\PhpPresentation\Style\Alignment;
 use PhpOffice\PhpPresentation\Style\Color;
 use PhpOffice\PhpPresentation\Style\Fill;
@@ -28,9 +29,20 @@ class PPTService
      */
     private $tpl;
 
+    /**
+     * @var string
+     */
     private $savePath;
 
+    /**
+     * @var string
+     */
     private $configPath;
+
+    /**
+     * @var Image
+     */
+    private $bg;
 
     /**
      * @var array
@@ -49,7 +61,7 @@ class PPTService
             mkdir(storage_path('ppt/output'), 0777, true);
         }
         $this->savePath = storage_path('ppt/output');
-        $this->configPath = resource_path('template/ppt'). '/config.json';
+        $this->configPath = resource_path('template/ppt');
     }
 
     public function init() {
@@ -58,6 +70,7 @@ class PPTService
             $this->tpl = $reader->load($this->filepath);
         }
         $this->dataDirs = $this->loadDataFile(storage_path('ppt'));
+        $this->bg = (new Image())->setPath($this->configPath . '/bg.png');
     }
 
     public function copy($indexes = []) {
@@ -109,6 +122,8 @@ class PPTService
 
     public function addTable() {
         $slide = $this->ppt->createSlide();
+        $slide->setBackground($this->bg);
+
         $table = new Table();
         $table->setNumColumns(6)
             ->setResizeProportional(false)
@@ -131,10 +146,7 @@ class PPTService
             $this->addTableRow($table, $files, $i);
         }
 
-        
-
         $slide->addShape($table);
-        $this->save();
     }
 
     private function initTableHeader(Table $table) {
@@ -229,9 +241,10 @@ class PPTService
 
     private function addSlide($dir) {
         $slide = $this->ppt->createSlide();
+        $slide->setBackground($this->bg);
 
         $data = json_decode(file_get_contents($dir['json']), true);
-        $configs = json_decode(file_get_contents($this->configPath), true);
+        $configs = json_decode(file_get_contents($this->configPath. '/config.json'), true);
         foreach ($configs as $key=>$config) {
             if ($key == 'title') {
                 $shape = $this->initRichText($slide, $config);
