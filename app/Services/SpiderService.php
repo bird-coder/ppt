@@ -3,8 +3,8 @@
  * @Description: 
  * @Author: yuanshisan
  * @Date: 2023-10-24 16:06:44
- * @LastEditTime: 2023-10-25 22:14:25
- * @LastEditors: yuanshisan
+ * @LastEditTime: 2023-11-03 11:01:18
+ * @LastEditors: yujiajie
  */
 
 namespace App\Services;
@@ -34,6 +34,9 @@ class SpiderService
         'A' => 'Invention',
     ];
 
+    protected $query = '宠物 and (辅食 or 辅食机 or 料理机)';
+    protected $filter_reg = '/(宠物|辅食).*(装置|机器|料理机|器)/';
+
     public function __construct($headers = [], $token = '')
     {
         if (!empty($headers)) $this->headers = $headers;
@@ -43,7 +46,7 @@ class SpiderService
     private function submit() {
         $url = $this->searchHost . 'submit';
         $data = array(
-            'q' => '宠物 and (辅食 or 辅食机 or 料理机)'
+            'q' => $this->query
         );
         $res = $this->post($url, $data);
         if (empty($res) || !$res['status']) {
@@ -58,10 +61,10 @@ class SpiderService
             'isSpecialQuery' => false,
             'limit' => '100',
             'page' => '1',
-            'originQuery' => '宠物 and (辅食 or 辅食机 or 料理机)',
-            'q' => '宠物 and (辅食 or 辅食机 or 料理机)',
-            'query' => '宠物 and (辅食 or 辅食机 or 料理机)',
-            'search_query' => '宠物 and (辅食 or 辅食机 or 料理机)',
+            'originQuery' => $this->query,
+            'q' => $this->query,
+            'query' => $this->query,
+            'search_query' => $this->query,
             'search_mode' => 'unset',
             'sort' => 'desc',
             'viewtype' => 'tablelist',
@@ -89,7 +92,7 @@ class SpiderService
             'job_id' => '',
             'limit' => 100,
             'page' => 1,
-            'q' => '宠物 and (辅食 or 辅食机 or 料理机)',
+            'q' => $this->query,
             'redirect' => '',
             'search_mode' => 'unset',
             'semantic_id' => '',
@@ -112,7 +115,7 @@ class SpiderService
             $title = $patent['TITLE'];
             if (strpos($title, 'span') === false) {
                 continue;
-            } elseif (!preg_match('/(宠物|辅食).*(装置|机器|料理机|器)/', $title)) {
+            } elseif (!preg_match($this->filter_reg, $title)) {
                 continue;
             }
             $tmp = array(
@@ -131,7 +134,7 @@ class SpiderService
             'efq' => "LEGAL_STATUS:(\"1\" OR \"2\" OR \"3\")",
             'limit' => 100,
             'page' => 1,
-            'q' => '宠物 and (辅食 or 辅食机 or 料理机)',
+            'q' => $this->query,
             'query' => [],
             'rows' => 100,
             'search_mode' => 'unset',

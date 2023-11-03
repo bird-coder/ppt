@@ -60,6 +60,9 @@ class PPTService
         if (!file_exists(storage_path('ppt/output'))) {
             mkdir(storage_path('ppt/output'), 0777, true);
         }
+        if (!file_exists(resource_path('template/ppt'))) {
+            mkdir(resource_path('template/ppt'), 0777, true);
+        }
         $this->savePath = storage_path('ppt/output');
         $this->configPath = resource_path('template/ppt');
     }
@@ -84,41 +87,6 @@ class PPTService
             
         }
     }
-
-    // public function addContent() {
-    //     if ($this->tpl) {
-    //         $slide = $this->tpl->setActiveSlideIndex(8);
-    //         //获取所有形状格式内容
-    //         foreach ($slide->getShapeCollection() as $one => $shape) {
-    //             try {
-    //                 if ($shape instanceof RichText) {
-    //                     $paragraphs = $shape->getParagraphs();
-    //                     foreach ($paragraphs as $two => $paragraph) {
-    //                         foreach ($paragraph->getRichTextElements() as $three => $richText) {
-    //                             $text = $richText->getText();
-
-    //                             switch ((string)$one.$two) {
-    //                                 case 'value':
-    //                                     # code...
-    //                                     break;
-                                    
-    //                                 default:
-    //                                     # code...
-    //                                     break;
-    //                             }
-    //                         }
-    //                     }
-    //                 } elseif ($shape instanceof Gd) {
-
-    //                 }
-                    
-    //             } catch (\Exception $e) {
-    //                 var_dump($e);
-    //             }
-    //         }
-    //         // $this->save();
-    //     }
-    // }
 
     public function addTable() {
         $slide = $this->ppt->createSlide();
