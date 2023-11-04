@@ -17,17 +17,10 @@ use PhpOffice\PhpPresentation\Style\Font;
 
 class PPTService
 {
-    private $filepath;
-
     /**
      * @var PhpPresentation
      */
     private $ppt;
-
-    /**
-     * @var PhpPresentation
-     */
-    private $tpl;
 
     /**
      * @var string
@@ -54,8 +47,12 @@ class PPTService
      */
     private $tableRows = 10;
 
-    public function __construct($filepath) {
-        $this->filepath = $filepath;
+    /**
+     * @var string
+     */
+    private $subject;
+
+    public function __construct($subject) {
         $this->ppt = new PhpPresentation();
         if (!file_exists(storage_path('ppt/output'))) {
             mkdir(storage_path('ppt/output'), 0777, true);
@@ -65,56 +62,67 @@ class PPTService
         }
         $this->savePath = storage_path('ppt/output');
         $this->configPath = resource_path('template/ppt');
+        $this->subject = $subject;
     }
 
     public function init() {
-        $reader = new PowerPoint2007();
-        if ($reader->canRead($this->filepath)) {
-            $this->tpl = $reader->load($this->filepath);
-        }
+        $this->ppt->removeSlideByIndex();
         $this->dataDirs = $this->loadDataFile(storage_path('ppt'));
-        $this->bg = (new Image())->setPath($this->configPath . '/bg.png');
+        $this->bg = (new Image())->setPath($this->configPath . '/bg.jpg');
     }
 
-    public function copy($indexes = []) {
-        if ($this->tpl) {
-            $this->ppt->removeSlideByIndex();
-            
-            foreach ($indexes as $index) {
-                $slide = $this->tpl->setActiveSlideIndex($index);
-                $this->ppt->addSlide($slide->copy());
-            }
-            
-        }
+    private function initPPT() {
+        $slide1 = $this->ppt->createSlide();
     }
 
-    public function addTable() {
+    public function addChart() {
+        $slide = $this->initDrawSlide();
+    }
+
+    private function initDrawSlide() {
         $slide = $this->ppt->createSlide();
         $slide->setBackground($this->bg);
 
-        $table = new Table();
-        $table->setNumColumns(6)
-            ->setResizeProportional(false)
-            ->setWidth(910)
-            ->setHeight(460)
-            ->setOffsetX(35)
-            ->setOffsetY(150);
+        $configs = json_decode(file_get_contents($this->configPath. '/config.json'), true);
+        $shape = $this->initRichText($slide, $configs['title']);
+        $paragraph = $shape->getActiveParagraph();
+        $paragraph->createTextRun($this->subject);
 
-        $this->initTableHeader($table);
+        return $slide;
+    }
+
+    public function addTable() {
         $dirs = $this->dataDirs;
         $size = $this->tableRows;
-        for ($i=0; $i < $size; $i++) {
-            $files = ['left' => '', 'right' => ''];
-            if (!empty($dirs[$i])) {
-                $files['left'] = $dirs[$i]['json'];
-            }
-            if (!empty($dirs[$i+$size])) {
-                $files['right'] = $dirs[$i+$size]['json'];
-            }
-            $this->addTableRow($table, $files, $i);
-        }
+        $base = 0;
+        while ($base < count($dirs)) {
+            $slide = $this->initDrawSlide();
 
-        $slide->addShape($table);
+            $table = new Table();
+            $table->setNumColumns(6)
+                ->setResizeProportional(false)
+                ->setWidth(910)
+                ->setHeight(460)
+                ->setOffsetX(35)
+                ->setOffsetY(150);
+    
+            $this->initTableHeader($table);
+
+            for ($i=$base; $i < $base+$size; $i++) {
+                $files = ['left' => '', 'right' => ''];
+                if (!empty($dirs[$i])) {
+                    $files['left'] = $dirs[$i]['json'];
+                }
+                if (!empty($dirs[$i+$size])) {
+                    $files['right'] = $dirs[$i+$size]['json'];
+                }
+                $this->addTableRow($table, $files, $i-$base);
+            }
+
+            $slide->addShape($table);
+
+            $base += $size*2;
+        }
     }
 
     private function initTableHeader(Table $table) {
@@ -200,9 +208,6 @@ class PPTService
     public function addContent() {
         $dirs = $this->dataDirs;
         foreach ($dirs as $dir) {
-            if (strpos($dir['json'], 'CN201810934292.4') === false) {
-                continue;
-            }
             $this->addSlide($dir);
         }
     }

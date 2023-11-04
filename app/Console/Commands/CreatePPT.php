@@ -3,7 +3,7 @@
  * @Description: 
  * @Author: yuanshisan
  * @Date: 2023-10-24 11:40:46
- * @LastEditTime: 2023-10-29 16:04:59
+ * @LastEditTime: 2023-11-04 16:56:01
  * @LastEditors: yuanshisan
  */
 
@@ -53,16 +53,17 @@ class CreatePPT extends Command
         
         // $this->getData();
 
-        if (!empty($filepath)) {
-            $this->createPPT($filepath);
-        }
+        $this->createPPT();
     }
 
-    private function createPPT($filepath) {
-        $ppt = new PPTService($filepath);
+    private function createPPT() {
+        $ppt = new PPTService('Pet hair dryer');
         $ppt->init();
-        // $ppt->copy([0,1,2,4,6]);
+        $ppt->addTable();
+        $ppt->addChart();
+        $ppt->addChart();
         $ppt->addContent();
+        $ppt->save();
     }
 
     private function getData() {
